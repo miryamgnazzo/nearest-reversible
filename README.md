@@ -1,4 +1,6 @@
 # nearest-reversible
-Nearest reversible matrix to a given one
+Nearest reversible matrix to a given one, via a Riemannian optimization approach.
 
 The new manifold is **multinomialsymmetricfixedfactory.m**, $\left\lbrace S \in \mathbb{R}^{n\times n}: S >0, S = S^T, S \boldsymbol{\hat \pi} = \boldsymbol{\hat \pi} \right\rbrace$.
+
+**Example_Random.m** and **Example_Reduucible.m** contain two examples.
