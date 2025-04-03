@@ -5,4 +5,4 @@ The new manifold is **multinomialsymmetricfixedfactory.m**, $\left\lbrace S \in 
 
 **getClosestSparse.m** contains the code by Neilsen and Weber.
 
-**Example_Random.m** and **Example_Reduucible.m** contain two examples.
+**Example_Random.m** and **Example_Reducible.m**(qui c'è qualche commento su alcuni possibili problemi) contain two examples.
