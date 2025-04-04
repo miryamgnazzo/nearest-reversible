@@ -7,20 +7,34 @@
 % 261-275, 2008. )
 % Per il momento ho aumentato le iterazioni di SinkHorn, ma mi sembra che
 % il risultato di Neilsen-Weber sia comunque migliore
-clear all; close all; clc
-rng(1)
-n = 10;
-%initialize two different vectors
-p1 = rand(n,1); p1 = p1/norm(p1,1);
-p2 = rand(n,1); p2 = p2/norm(p2,1);
+ clear all; close all; clc
+ rng(1)
+ n = 10;
 
-A1 = genrand(p1); A2 =  genrand(p2);
+% Example 1--------------------
+% %initialize two different vectors
+% p1 = rand(n,1); p1 = p1/norm(p1,1);
+% p2 = rand(n,1); p2 = p2/norm(p2,1);
+% 
+% A1 = genrand(p1); A2 =  genrand(p2);
+
+% Example 2----------------------------
+A1 = rand(n,n);
+A1 = diag(sum(A1,2))\A1;
+[p1,~] = eigs(A1',1,'largestabs');
+p1 = p1/sum(p1);
+
+A2 = rand(n,n);
+A2 = diag(sum(A2,2))\A2;
+[p2,~] = eigs(A2',1,'largestabs');
+p2 = p2/sum(p2);
+
+%Choose the manifold and the matrix A
 A = blkdiag(A1, A2);
-
 a = 0.2;
 pp = a*[p1; zeros(n,1)] + (1-a)*[zeros(n,1); p2];
-pv = pp.^(1/2);
 
+pv = pp.^(1/2);
 M = multinomialsymmetricfixedfactory(pv);
 
 A0 = A;
@@ -45,7 +59,7 @@ norm(diag(pp)*Xs - Xs'*diag(pp))
 norm(Xs*ones(2*n,1) - ones(2*n,1))
 norm(pp'*Xs - pp')
 
-fprintf("||Xs - Ahat|| = %e\n", norm(Xs - A0,"fro"));
+fprintf("||Xs - A|| = %e\n", norm(Xs - A0,"fro"));
 
  infotable = struct2table(info);
 % e = sqrt(infotable.cost);
