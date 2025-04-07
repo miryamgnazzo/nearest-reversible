@@ -75,7 +75,15 @@ switch lower(class)
             end
         end
         P = diag(D)\A;
-        
+    case "multipleergodic"
+        block_sizes = int32(get_random_block_sizes(Size));
+        blocks = cell(length(block_sizes),1);
+        for i=1:length(block_sizes)
+            blocks{i} = rand(block_sizes(i),block_sizes(i));
+        end
+        A = blkdiag(blocks{:});
+        D = sum(A,2);
+        P = diag(D)\A;
     otherwise
         error("Unknown class %s",class)
 end
