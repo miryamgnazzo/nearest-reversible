@@ -10,6 +10,10 @@ number = repmat([10,10,10,10,10],[length(classes),1]);
 
 [P,pi] = markov_generator(classes,sizes,number,seed);
 
+% We save the test set to file, in this way we avoid generating it every
+% time
+save('test_set.mat','P','pi');
+
 %% Visualize
 figure(1)
 heatmap(P{1,1})
