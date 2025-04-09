@@ -22,7 +22,7 @@ function M = multinomialsymmetricfixedfactory(pv)
 n = length(pv);
 pi = pv.^2;
 % maxDSiters = 100 + 2*n;
-maxDSiters = 3000 + 2*n;
+maxDSiters = 1000 + 2*n;
 
 M.name = @() sprintf(['%dx%d symmetric matrices with positive ' ...
     'entries and fixed right and left eigenvectors'], n, n);
@@ -50,14 +50,14 @@ M.typicaldist = @() n;
 M.rand = @random;
     function X = random()
         X = abs(randn(n, n));
-        X = 0.5*(X+X');
+        X = 0.5*(X+X'); 
 
-        %RETRACTION HERE
-        Xr = diag(pv.^-1)*X*diag(pv); %this is reversible wrt pi=pv.^2
-        [Xr, u, v] = modifiedsinkhorn(Xr,pi,maxDSiters); %this is rev, Xr1 =1, pi'*X= pi'
-        c = u(1)./v(1);
-        X = c*diag(v)*X*diag(v);
-        %
+        %Retraction con double_stoch_general di manopt
+        Xr = diag(pv)*X*diag(pv);
+        [XXr, u,v]= my_doubly_stochastic_general(Xr,pi,pi, maxDSiters);
+        
+       X = diag(u)*X*diag(v);
+       X = 0.5*(X+X'); %probably we don't need it here
     end
 
 
@@ -112,16 +112,20 @@ M.retr = @retraction;
         if nargin < 3
            t = 1.0;
         end
-        Y = X.*exp(t*(eta./X));
+         Y = X.*exp(t*(eta./X));
+ 
+%         Y = X + t*eta;
 
-       %RETRACTION HERE
-         Yr = diag(pv.^-1)*Y*diag(pv); %this is reversible wrt pi=pv.^2
-        [Yr, u, v] = modifiedsinkhorn(Yr,pi,maxDSiters); %this is rev, Xr1 =1, pi'*X= pi'
-        c = u(1)./v(1);
-        Y = c*diag(v)*Y*diag(v);
-        %
+        Y = min(Y, 1e50); % For numerical stability
+        Y = max(Y, 1e-50); % For numerical stability
 
-        Y = max(Y, eps);      
+    %Retraction con double_stoch_general di manopt
+    Yr = diag(pv)*Y*diag(pv);
+    [YYr, u, v]= my_doubly_stochastic_general(Yr, pi, pi, maxDSiters);
+
+     Y = diag(u)*Y*diag(v);
+     Y = 0.5*(Y + Y');        
+     Y = max(Y, eps);      
     end
 
 % Conversion of Euclidean to Riemannian Hessian
