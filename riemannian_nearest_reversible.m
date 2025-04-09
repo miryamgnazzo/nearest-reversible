@@ -75,7 +75,24 @@ if RecurseErgodic
         if length(QE{i}) > 1 
             if verbose, fprintf("Running Optimization on class %d of size %d x %d.\n",i,size(QE{i})),end
             % If the ergodic class is made by more than a single state
-            REc{i} = ones(size(QE{i})); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
+
+            %set up for manopt
+    %       piE{i} = piE{i}/sum(piE{i}); %If needed
+            pv = piE{i}.^(1/2);
+            M = multinomialsymmetricfixedfactory(pv);
+
+            %clear problem; %If needed
+            problem.M = M;
+            problem.cost = @(X) 0.5*norm(diag(pv.^(-1))*X*diag(pv) - QE{i},'fro')^2;
+            problem.egrad = @(X) (diag(piE{i}.^(-1))*X*diag(piE{i}) - diag(pv.^(-1))*QE{i}*diag(pv));
+            problem.ehess = @(X, dX) diag(piE{i}.^(-1))*dX*diag(piE{i});
+            
+            % options.tolgradnorm = 1e-10;
+            options.verbosity = 0;
+
+            [X1, xcost, ~, ~] = trustregions(problem, [], options);
+            REc{i} = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
+%             REc{i} = ones(size(QE{i})); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
         else
             if verbose, fprintf("Skipping solution, class is of size 1\n"), end
             % The ergodic class is an isolated state: we are reversible
@@ -94,8 +111,22 @@ else
     % We don't care if there are any other ergodic classes and run the
     % Riemannian optimization algorithm on the whole Q
     if verbose, fprintf("Running Optimization on chain of size %d x %d.\n",size(Q)),end
+   
+    %set up for manopt
+    pv = pi.^(1/2);
+    M = multinomialsymmetricfixedfactory(pv);
+    problem.M = M;
+    problem.cost = @(X) 0.5*norm(diag(pv.^(-1))*X*diag(pv) - Q,'fro')^2;
+    problem.egrad = @(X) (diag(pi.^(-1))*X*diag(pi) - diag(pv.^(-1))*Q*diag(pv));
+    problem.ehess = @(X, dX) diag(pi.^(-1))*dX*diag(pi);
+
+    % options.tolgradnorm = 1e-10;
+    options.verbosity = 0;
+    
     tic;
-    RE = ones(size(Q)); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
+    [X1, xcost, ~, ~] = trustregions(problem, [], options);
+    RE = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
+%     RE = ones(size(Q)); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
     time_solve = time_solve + toc;
 end
 
