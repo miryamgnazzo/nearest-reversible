@@ -1,4 +1,4 @@
-%% Test for matrices with zero entries - shifted version
+%Test for matrices with zero entries - shifted version
 clear all; close all; clc
 
 classes = "multipleergodic";
