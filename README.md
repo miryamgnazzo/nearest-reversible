@@ -1,7 +1,7 @@
 # nearest-reversible
 This repository contains the code for computing the numerical approximation of the nearest reversible Markov Chain, to a given one. The approach relies on a Riemannian optimization problem, over the manifold
 
-$\Big\{ S \in \mathbb{R}^{n\times n} : S > 0,\; S = S^\top,\; S \hat{\boldsymbol{\pi}} = \hat{\boldsymbol{\pi}} \Big\}.$
+$\{ S \in \mathbb{R}^{n\times n} : S > 0,\; S = S^\top,\; S \hat{{\pi}} = \hat{\boldsymbol{\pi}} \}.$
 
 ## Main functions:
 * **multinomialsymmetricfixedfactory.m**: contains an implementation of the manifold;
