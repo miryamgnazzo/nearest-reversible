@@ -25,7 +25,11 @@ end
 % Check inputs
 if n ~= m, error("riemannian_nearest_reversible:: is not square (%d,%d)",n,m), end
 if norm(sum(P,2)-1,"inf") > 10*eps
-    error('riemannian_nearest_reversible:: P is not Stochastic! norm(sum(P,2)-1,"inf") = %e > %e',norm(sum(P,2)-1,"inf"),10*eps);
+    if any(sum(P,2) == 0)
+        if (verbose); fprintf("The chain has 0 row-sums\n"); end
+    else
+        error('riemannian_nearest_reversible:: P is not Stochastic! norm(sum(P,2)-1,"inf") = %e > %e',norm(sum(P,2)-1,"inf"),10*eps);
+    end
 end
 if any(pi < 0)
     if all(pi < 0)
@@ -40,12 +44,14 @@ time_presolve = 0;
 time_solve = 0;
 
 tic;
-zeroind = find(abs(pi) < 10*eps);
+zeroind = find(abs(pi) < 100*eps);
 if ~isempty(zeroind)
     if verbose, fprintf('P has transient states, reducing problem to recurrent subchain(s)'), end
     Q = P(setdiff(1:n,zeroind),setdiff(1:n,zeroind));
+    qpi = pi(setdiff(1:n,zeroind),1);
 else
     Q = P;
+    qpi = pi;
 end
 time_presolve = time_presolve + toc;
 
@@ -64,7 +70,7 @@ if RecurseErgodic
 
     for i = 1:E
         QE{i} = Q(bins == i,bins == i);
-        piE{i} = pi(bins == i,1);
+        piE{i} = qpi(bins == i,1);
     end
     time_presolve = time_presolve + toc;
     
@@ -113,12 +119,12 @@ else
     if verbose, fprintf("Running Optimization on chain of size %d x %d.\n",size(Q)),end
    
     %set up for manopt
-    pv = pi.^(1/2);
+    pv = qpi.^(1/2);
     M = multinomialsymmetricfixedfactory(pv);
     problem.M = M;
     problem.cost = @(X) 0.5*norm(diag(pv.^(-1))*X*diag(pv) - Q,'fro')^2;
-    problem.egrad = @(X) (diag(pi.^(-1))*X*diag(pi) - diag(pv.^(-1))*Q*diag(pv));
-    problem.ehess = @(X, dX) diag(pi.^(-1))*dX*diag(pi);
+    problem.egrad = @(X) (diag(qpi.^(-1))*X*diag(qpi) - diag(pv.^(-1))*Q*diag(pv));
+    problem.ehess = @(X, dX) diag(qpi.^(-1))*dX*diag(qpi);
 
     % options.tolgradnorm = 1e-10;
     options.verbosity = 0;
