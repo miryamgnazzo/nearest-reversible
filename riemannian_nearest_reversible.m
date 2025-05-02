@@ -142,7 +142,7 @@ if ~isempty(zeroind)
     % We had transient states
     R = zeros(n,n);
     R(setdiff(1:n,zeroind),setdiff(1:n,zeroind)) = RE;
-    R(zeroind,zeroind) = P(zeroind,zeroind);
+    R(zeroind,:) = P(zeroind,:);
 else
     R = RE;
 end
