@@ -19,7 +19,7 @@ fprintf("Number of classes: %d\n",size(P,1));
 fprintf("Number of test problems: %d x %d = %d\n",size(P,1),size(P,2),numel(P));
 
 total_test_number = numel(P);
-number_of_algorithms = 4;
+number_of_algorithms = 3;
 
 solve_time     = NaN(total_test_number,number_of_algorithms);
 distance_norm  = NaN(total_test_number,number_of_algorithms);
@@ -45,10 +45,10 @@ for i = 1:total_test_number
             R = getClosestSparse(Pmat,pivec);
             solve_time(i,solver_number) = toc;
             distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
-            reversibility(i,solver_number) = norm(Dpi*Pmat - Pmat'*Dpi,"inf");
-            stationary(i,solver_number) = norm(pivec'*Pmat-pivec',"inf");
+            reversibility(i,solver_number) = norm(Dpi*R - R'*Dpi,"inf");
+            stationary(i,solver_number) = norm(pivec'*R - pivec',"inf");
         catch
-            fprintf("Solver %d failed on problem %d :-(",solver_number,i);
+            fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
 
         %% Riemannian solver
@@ -62,7 +62,7 @@ for i = 1:total_test_number
             reversibility(i,solver_number) = info.reversibility;
             stationary(i,solver_number) = info.stationarity;
         catch
-            fprintf("Solver %d failed on problem %d :-(",solver_number,i);
+            fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
 
         %% Gurobi solver (Automatic)
@@ -70,30 +70,29 @@ for i = 1:total_test_number
         try
             [R,solve_time(i,solver_number)] = getClosestSparse_gurobi(Pmat,pivec,-1);
             distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
-            reversibility(i,solver_number) = norm(Dpi*Pmat - Pmat'*Dpi,"inf");
-            stationary(i,solver_number) = norm(pivec'*Pmat-pivec',"inf");
+            reversibility(i,solver_number) = norm(Dpi*R - R'*Dpi,"inf");
+            stationary(i,solver_number) = norm(pivec'*R - pivec',"inf");
         catch
-            fprintf("Solver %d failed on problem %d :-(",solver_number,i);
+            fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
 
         %% Gurobi solver (Primal Simplex)
-        solver_number = 4;
-        try
-            [R,solve_time(i,solver_number)] = getClosestSparse_gurobi(Pmat,pivec,0);
-            distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
-            reversibility(i,solver_number) = norm(Dpi*Pmat - Pmat'*Dpi,"inf");
-            stationary(i,solver_number) = norm(pivec'*Pmat-pivec',"inf");
-        catch
-            fprintf("Solver %d failed on problem %d :-(",solver_number,i);
-        end
+        % solver_number = 4;
+        % try
+        %    [R,solve_time(i,solver_number)] = getClosestSparse_gurobi(Pmat,pivec,0);
+        %    distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
+        %    reversibility(i,solver_number) = norm(Dpi*Pmat - Pmat'*Dpi,"inf");
+        %    stationary(i,solver_number) = norm(pivec'*Pmat-pivec',"inf");
+        % catch
+        %    fprintf("Solver %d failed on problem %d :-(",solver_number,i);
+        % end
 
     else
         fprintf("Skipped test: the matrix is empty!")
     end
 
     %% Save results to file
-    save("test_runner_results.mat","stationary","reversibility","stationary","distance_norm")
+    save("test_runner_results.mat","stationary","reversibility","solve_time","distance_norm")
 
 
 end
-
