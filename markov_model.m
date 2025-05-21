@@ -2,7 +2,7 @@
 
 clear; clc; close all;
 
-dt = 0.001;    % Time step
+dt = 0.0001;    % Time step
 N  = 6e7;      % Number of steps
 x0 = 0;        % Initial condition
 sigma = 1;     % Noise intensity
@@ -24,10 +24,15 @@ end
 %% Visualize
 
 time = linspace(0, Time, N);
-plot(time, x);
+figure(1)
+plot(downsample(time(1:N/4),1000), downsample(x(1:N/4),1000));
 xlabel('Time');
-ylabel('$X_t mod 2\pi$','Interpreter','LaTeX');
+ylabel('$X_t$  mod  $2\pi$','Interpreter','LaTeX');
 title('Euler-Maruyama Simulation of SDE with Periodic Potential');
+bins = linspace(0, 2*pi, bin_count+1);
+ylim([0,2*pi])
+hline(bins,'k--')
+
 
 %% Compute transition matrix
 [C, T] = compute_markov_matrix(x, bin_count, chunk_size);

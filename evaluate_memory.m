@@ -13,7 +13,8 @@ catch
 end
 
 %% Generate uniform test problems
-[P,pi] = markov_generator("uniform",[10 100 200 300 500],[1 1 1 1 1]);
+%[P,pi] = markov_generator("uniform",[10 100 200 300 500],[1 1 1 1 1]);
+load('matrix-memory.mat')
 
 peakMem           = zeros(5,5,2);
 TotalMemAllocated = zeros(5,5,2);

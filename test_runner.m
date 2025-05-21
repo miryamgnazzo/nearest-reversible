@@ -14,7 +14,7 @@ end
 addpath('/software/gurobi/gurobi1102/linux64/matlab');
 
 %% Load test problems
-load('test_set.mat');
+load('test_set_smaller.mat');
 fprintf("Number of classes: %d\n",size(P,1));
 fprintf("Number of test problems: %d x %d = %d\n",size(P,1),size(P,2),numel(P));
 
