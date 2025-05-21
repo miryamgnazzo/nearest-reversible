@@ -1,7 +1,7 @@
 function [P,info] = riemannian_nearest_reversible(A,pi,varargin)
-%RIEMANNIAN_NEAREST_REVERSIBLE Computes the nearest reversible Markov chain
+%RIEMANNIAN_NEAREST_REVERSIBLE: given a matrix A, computes the nearest reversible stochastic matrix P
 %with the same stationary vector pi via Riemannian optimization
-%   Detailed explanation goes here
+%The algorithm identifies transient states and possibly separates the problem into ergodic classes (if known)
 
 %% Parsing of the inputs
 p = inputParser;
