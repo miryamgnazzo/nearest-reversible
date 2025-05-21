@@ -1,4 +1,4 @@
-function [R,info] = riemannian_nearest_reversible(P,pi,varargin)
+function [P,info] = riemannian_nearest_reversible(A,pi,varargin)
 %RIEMANNIAN_NEAREST_REVERSIBLE Computes the nearest reversible Markov chain
 %with the same stationary vector pi via Riemannian optimization
 %   Detailed explanation goes here
@@ -6,12 +6,12 @@ function [R,info] = riemannian_nearest_reversible(P,pi,varargin)
 %% Parsing of the inputs
 p = inputParser;
 
-addRequired(p,'P',@ismatrix)
+addRequired(p,'A',@ismatrix)
 addRequired(p,'pi',@iscolumn)
 addOptional(p,'RecurseErgodic',false,@islogical)
 addOptional(p,'verbose',false,@islogical)
 
-parse(p,P,pi,varargin{:})
+parse(p,A,pi,varargin{:})
 
 RecurseErgodic = p.Results.RecurseErgodic;
 verbose = p.Results.verbose;
@@ -21,7 +21,7 @@ if (verbose)
     fprintf('Verbose mode on\n');
 end 
 
-[n,m] = size(P);
+[n,m] = size(A);
 % Check inputs
 if n ~= m, error("riemannian_nearest_reversible:: is not square (%d,%d)",n,m), end
 if norm(sum(P,2)-1,"inf") > 10*eps
@@ -47,10 +47,10 @@ tic;
 zeroind = find(abs(pi) < 100*eps);
 if ~isempty(zeroind)
     if verbose, fprintf('P has transient states, reducing problem to recurrent subchain(s)'), end
-    Q = P(setdiff(1:n,zeroind),setdiff(1:n,zeroind));
+    Q = A(setdiff(1:n,zeroind),setdiff(1:n,zeroind));
     qpi = pi(setdiff(1:n,zeroind),1);
 else
-    Q = P;
+    Q = A;
     qpi = pi;
 end
 time_presolve = time_presolve + toc;
@@ -83,7 +83,6 @@ if RecurseErgodic
             % If the ergodic class is made by more than a single state
 
             %set up for manopt
-    %       piE{i} = piE{i}/sum(piE{i}); %If needed
             pv = piE{i}.^(1/2);
             M = multinomialsymmetricfixedfactory(pv);
 
@@ -93,12 +92,10 @@ if RecurseErgodic
             problem.egrad = @(X) (diag(piE{i}.^(-1))*X*diag(piE{i}) - diag(pv.^(-1))*QE{i}*diag(pv));
             problem.ehess = @(X, dX) diag(piE{i}.^(-1))*dX*diag(piE{i});
             
-            % options.tolgradnorm = 1e-10;
             options.verbosity = 0;
 
             [X1, xcost, ~, ~] = trustregions(problem, [], options);
             REc{i} = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
-%             REc{i} = ones(size(QE{i})); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
         else
             if verbose, fprintf("Skipping solution, class is of size 1\n"), end
             % The ergodic class is an isolated state: we are reversible
@@ -126,13 +123,11 @@ else
     problem.egrad = @(X) (diag(qpi.^(-1))*X*diag(qpi) - diag(pv.^(-1))*Q*diag(pv));
     problem.ehess = @(X, dX) diag(qpi.^(-1))*dX*diag(qpi);
 
-    % options.tolgradnorm = 1e-10;
     options.verbosity = 0;
     
     tic;
     [X1, xcost, ~, ~] = trustregions(problem, [], options);
     RE = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
-%     RE = ones(size(Q)); %TODO: Sostituire qui l'ottimizzazione Riemanniana!
     time_solve = time_solve + toc;
 end
 
@@ -140,11 +135,11 @@ end
 % Assemble with respect to transient states
 if ~isempty(zeroind)
     % We had transient states
-    R = zeros(n,n);
-    R(setdiff(1:n,zeroind),setdiff(1:n,zeroind)) = RE;
-    R(zeroind,:) = P(zeroind,:);
+    P = zeros(n,n);
+    P(setdiff(1:n,zeroind),setdiff(1:n,zeroind)) = RE;
+    P(zeroind,:) = A(zeroind,:);
 else
-    R = RE;
+    P = RE;
 end
 
 %% Output
@@ -152,11 +147,11 @@ if nargout > 1
     info.time_presolve = time_presolve;
     info.time_solve = time_solve;
     Dpi = spdiags(pi,0,n,n);
-    info.reversibility = norm(Dpi*R - R'*Dpi,"inf");
-    info.stochasticity = norm(sum(R,2)-1,"inf");
-    info.stationarity = norm(pi'*R-pi',"inf");
-    info.distance = norm(P-R,"fro");
-    info.relative_distance = info.distance/norm(P,"fro");
+    info.reversibility = norm(Dpi*P - P'*Dpi,"inf");
+    info.stochasticity = norm(sum(P,2)-1,"inf");
+    info.stationarity = norm(pi'*P-pi',"inf");
+    info.distance = norm(A-P,"fro");
+    info.relative_distance = info.distance/norm(A,"fro");
 end
 
 end
