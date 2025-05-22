@@ -5,8 +5,8 @@ clear; clc; close all;
 classes = ["uniform","normal","sbm","multipleergodic"];
 seed = 17;
 
-sizes = repmat([50,100,200,300,500],[length(classes),1]);
-number = repmat([10,10,10,10,10],[length(classes),1]);
+sizes = repmat([50,100,200],[length(classes),1]);
+number = repmat([5,5,5],[length(classes),1]);
 
 [P,pi] = markov_generator(classes,sizes,number,seed);
 
