@@ -25,6 +25,7 @@ solve_time     = NaN(total_test_number,number_of_algorithms);
 distance_norm  = NaN(total_test_number,number_of_algorithms);
 reversibility  = NaN(total_test_number,number_of_algorithms);
 stationary     = NaN(total_test_number,number_of_algorithms);
+stochastic     = NaN(total_test_number,number_of_algorithms);
 actual_count = 0;
 
 for i = 1:total_test_number
@@ -34,22 +35,30 @@ for i = 1:total_test_number
     pivec = pi{i};
     Dpi = diag(pivec);
 
+    % Check if Pmat has ergodic classes
+    G = digraph(Pmat);
+    [bins,binsize] = G.conncomp("OutputForm","vector","Type","strong");
+    hasergodic = length(binsize) > 1;
+    
     if size(Pmat,1) > 0
+        
         actual_count = actual_count + 1;
 
         %% Quadratic programming solver
         solver_number = 1;
         try
-            fprintf("Solving problem %d with QP solver\n",i);
-            tic;
-            R = getClosestSparse(Pmat,pivec);
-            solve_time(i,solver_number) = toc;
-            distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
-            reversibility(i,solver_number) = norm(Dpi*R - R'*Dpi,"inf");
-            stationary(i,solver_number) = norm(pivec'*R - pivec',"inf");
+            fprintf("Solving problem %d with Riemann solver\n",i);
+            [R,info] = qp_nearest_reversible(Pmat,pivec,...
+                'RecurseErgodic',hasergodic,'verbose',false,'solver','quadprog');
+            solve_time(i,solver_number) = info.time_presolve + info.time_solve;
+            distance_norm(i,solver_number) = info.relative_distance;
+            reversibility(i,solver_number) = info.reversibility;
+            stationary(i,solver_number) = info.stationarity;
+            stochastic(i,solver_number) = norm(1-sum(R,2),"inf");
         catch
             fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
+        
 
         %% Riemannian solver
         solver_number = 2;
@@ -61,6 +70,7 @@ for i = 1:total_test_number
             distance_norm(i,solver_number) = info.relative_distance;
             reversibility(i,solver_number) = info.reversibility;
             stationary(i,solver_number) = info.stationarity;
+            stochastic(i,solver_number) = norm(1-sum(R,2),"inf");
         catch
             fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
@@ -68,14 +78,18 @@ for i = 1:total_test_number
         %% Gurobi solver (Automatic)
         solver_number = 3;
         try
-            [R,solve_time(i,solver_number)] = getClosestSparse_gurobi(Pmat,pivec,-1);
-            distance_norm(i,solver_number) = norm(Pmat-R,"fro")/norm(Pmat,"fro");
-            reversibility(i,solver_number) = norm(Dpi*R - R'*Dpi,"inf");
-            stationary(i,solver_number) = norm(pivec'*R - pivec',"inf");
+            fprintf("Solving problem %d with Riemann solver\n",i);
+            [R,info] = qp_nearest_reversible(Pmat,pivec,...
+                'RecurseErgodic',hasergodic,'verbose',false,'solver','gurobi');
+            solve_time(i,solver_number) = info.time_presolve + info.time_solve;
+            distance_norm(i,solver_number) = info.relative_distance;
+            reversibility(i,solver_number) = info.reversibility;
+            stationary(i,solver_number) = info.stationarity;
+            stochastic(i,solver_number) = norm(1-sum(R,2),"inf");
         catch
             fprintf("Solver %d failed on problem %d :-(\n",solver_number,i);
         end
-
+               
         %% Gurobi solver (Primal Simplex)
         % solver_number = 4;
         % try
@@ -92,7 +106,7 @@ for i = 1:total_test_number
     end
 
     %% Save results to file
-    save("test_runner_results.mat","stationary","reversibility","solve_time","distance_norm")
+    save("test_runner_results_new.mat","stationary","reversibility","solve_time","distance_norm")
 
 
 end
