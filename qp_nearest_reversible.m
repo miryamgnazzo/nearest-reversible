@@ -1,7 +1,6 @@
-function [P,info] = riemannian_nearest_reversible(A,pi,varargin)
-%RIEMANNIAN_NEAREST_REVERSIBLE: given a matrix A, computes the nearest reversible stochastic matrix P
-%with the same stationary vector pi via Riemannian optimization
-%The algorithm identifies transient states and possibly separates the problem into ergodic classes (if known)
+function [P,info] = qp_nearest_reversible(A,pi,varargin)
+%RIEMANNIAN_NEAREST_REVERSIBLE Computes the nearest reversible Markov chain
+%with the same stationary vector pi via quadratic programming
 
 %% Parsing of the inputs
 p = inputParser;
@@ -10,16 +9,21 @@ addRequired(p,'A',@ismatrix)
 addRequired(p,'pi',@iscolumn)
 addOptional(p,'RecurseErgodic',false,@islogical)
 addOptional(p,'verbose',false,@islogical)
+addOptional(p,'solver','quadprog',@ischar);
 
 parse(p,A,pi,varargin{:})
 
 RecurseErgodic = p.Results.RecurseErgodic;
 verbose = p.Results.verbose;
+solver = p.Results.solver;
+if ~(strcmp(solver,'quadprog') || strcmp(solver,'gurobi'))
+    error("Unknown solver %s: has to be gurobi or quadprog",solver);
+end
 
 %% Start Computations
-if (verbose) 
+if (verbose)
     fprintf('Verbose mode on\n');
-end 
+end
 
 [n,m] = size(A);
 % Check inputs
@@ -62,12 +66,12 @@ if RecurseErgodic
     G = digraph(Q);
     [bins,binsize] = G.conncomp("OutputForm","vector","Type","strong");
     
-    E = length(binsize); 
+    E = length(binsize);
     if (verbose), fprintf('Found %d Ergodic Classes.\n',E), end
     QE = cell(E,1);
     piE = cell(E,1);
     REc = cell(E,1);
-
+    
     for i = 1:E
         QE{i} = Q(bins == i,bins == i);
         piE{i} = qpi(bins == i,1);
@@ -78,24 +82,15 @@ if RecurseErgodic
     % We run the solver on each ergodic class
     tic;
     for i = 1:E
-        if length(QE{i}) > 1 
+        if length(QE{i}) > 1
             if verbose, fprintf("Running Optimization on class %d of size %d x %d.\n",i,size(QE{i})),end
             % If the ergodic class is made by more than a single state
-
-            %set up for manopt
-            pv = piE{i}.^(1/2);
-            M = multinomialsymmetricfixedfactory(pv);
-
-            %clear problem; %If needed
-            problem.M = M;
-            problem.cost = @(X) 0.5*norm(diag(pv.^(-1))*X*diag(pv) - QE{i},'fro')^2;
-            problem.egrad = @(X) (diag(piE{i}.^(-1))*X*diag(piE{i}) - diag(pv.^(-1))*QE{i}*diag(pv));
-            problem.ehess = @(X, dX) diag(piE{i}.^(-1))*dX*diag(piE{i});
-            
-            options.verbosity = 0;
-
-            [X1, xcost, ~, ~] = trustregions(problem, [], options);
-            REc{i} = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
+            switch solver
+                case 'quadprog'
+                    REc{i} = getClosestSparse(QE{i}, piE{i});
+                case 'gurobi'
+                    REc{i} = getClosestSparse_gurobi(QE{i}, piE{i}, -1);
+            end
         else
             if verbose, fprintf("Skipping solution, class is of size 1\n"), end
             % The ergodic class is an isolated state: we are reversible
@@ -114,20 +109,15 @@ else
     % We don't care if there are any other ergodic classes and run the
     % Riemannian optimization algorithm on the whole Q
     if verbose, fprintf("Running Optimization on chain of size %d x %d.\n",size(Q)),end
-   
-    %set up for manopt
-    pv = qpi.^(1/2);
-    M = multinomialsymmetricfixedfactory(pv);
-    problem.M = M;
-    problem.cost = @(X) 0.5*norm(diag(pv.^(-1))*X*diag(pv) - Q,'fro')^2;
-    problem.egrad = @(X) (diag(qpi.^(-1))*X*diag(qpi) - diag(pv.^(-1))*Q*diag(pv));
-    problem.ehess = @(X, dX) diag(qpi.^(-1))*dX*diag(qpi);
-
-    options.verbosity = 0;
+    
     
     tic;
-    [X1, xcost, ~, ~] = trustregions(problem, [], options);
-    RE = diag(pv.^(-1))*X1*diag(pv); %Solution of the problem - Reversible
+    switch solver
+        case 'quadprog'
+            RE = getClosestSparse(Q, qpi);
+        case 'gurobi'
+            RE = getClosestSparse_gurobi(Q, qpi, -1);
+    end
     time_solve = time_solve + toc;
 end
 

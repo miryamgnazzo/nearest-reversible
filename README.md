@@ -24,6 +24,8 @@ where $\pi$ is the stationary distribution associated with the original chain, a
 * The function `markov_generator.m` employs Python functions which use the [NetworkX library](https://networkx.org/);
 * The function `getClosestSparse.m` is the implementation from [iwhasherefirst2](https://github.com/iwasherefirst2/closest-reversible-markov-chain) implemeting the algorithm from
   * Nielsen, A. J. N., and Marcus Weber. "Computing the nearest reversible Markov chain." Numerical Linear Algebra with Applications 22.3 (2015): 483-499.
+* The function `supportTSDP.m` can be found in the repository [Target Stationary Distribution Problem](https://gitlab.com/ngillis/TSDP/-/tree/e0ddc7edf9137861ba887a3d48cb38048986e220/), implementing the algorithm in
+  * N. Gillis and P. Van Dooren, "Assigning Stationary Distributions to Sparse Stochastic Matrices", SIAM J. on Matrix Analysis and Applications 45 (4), pp. 2184-2210, 2024. 
 > [!IMPORTANT]
 > If you end up using the `getClosestSparse.m` routine please cite the relevant paper:
 > ```bibtex
