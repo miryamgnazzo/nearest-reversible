@@ -28,8 +28,8 @@ end
 [n,m] = size(A);
 % Check inputs
 if n ~= m, error("riemannian_nearest_reversible:: is not square (%d,%d)",n,m), end
-if norm(sum(P,2)-1,"inf") > 10*eps
-    if any(sum(P,2) == 0)
+if norm(sum(A,2)-1,"inf") > 10*eps
+    if any(sum(A,2) == 0)
         if (verbose); fprintf("The chain has 0 row-sums\n"); end
     else
         error('riemannian_nearest_reversible:: P is not Stochastic! norm(sum(P,2)-1,"inf") = %e > %e',norm(sum(P,2)-1,"inf"),10*eps);

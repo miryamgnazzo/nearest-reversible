@@ -1,4 +1,4 @@
-function M = multinomialsymmetricfixedfactory(hp)
+function M = multinomialsymmetricfixedfactory(pv)
 % Manifold of n-by-n matrices with positive entries and
 % fixed left-hand stochastic eigenvector
 %
@@ -19,8 +19,8 @@ function M = multinomialsymmetricfixedfactory(hp)
 %
 % The retraction here provided is only first order.
 
-n = length(hp);
-pi = hp.^2;
+n = length(pv);
+pi = pv.^2;
 % maxDSiters = 100 + 2*n;
 maxDSiters = 1000 + 2*n;
 
