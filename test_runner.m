@@ -47,7 +47,7 @@ for i = 1:total_test_number
         %% Quadratic programming solver
         solver_number = 1;
         try
-            fprintf("Solving problem %d with Riemann solver\n",i);
+            fprintf("Solving problem %d with MATLAB QP solver\n",i);
             [R,info] = qp_nearest_reversible(Pmat,pivec,...
                 'RecurseErgodic',hasergodic,'verbose',false,'solver','quadprog');
             solve_time(i,solver_number) = info.time_presolve + info.time_solve;
@@ -78,7 +78,7 @@ for i = 1:total_test_number
         %% Gurobi solver (Automatic)
         solver_number = 3;
         try
-            fprintf("Solving problem %d with Riemann solver\n",i);
+            fprintf("Solving problem %d with GUROBI QP solver\n",i);
             [R,info] = qp_nearest_reversible(Pmat,pivec,...
                 'RecurseErgodic',hasergodic,'verbose',false,'solver','gurobi');
             solve_time(i,solver_number) = info.time_presolve + info.time_solve;
@@ -106,7 +106,7 @@ for i = 1:total_test_number
     end
 
     %% Save results to file
-    save("test_runner_results_new.mat","stationary","reversibility","solve_time","distance_norm")
+    save("test_runner_results_new.mat","stationary","reversibility","solve_time","distance_norm","stochastic")
 
 
 end
